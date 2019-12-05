@@ -1,4 +1,5 @@
 import sys,time
+sys.path.append("..")
 import numpy as np
 import torch
 
@@ -6,7 +7,7 @@ import utils
 
 class Appr(object):
 
-    def __init__(self,model,nepochs=100,sbatch=64,lr=0.05,lr_min=1e-4,lr_factor=3,lr_patience=5,clipgrad=10000,args=None):
+    def __init__(self,model,device,nepochs=100,sbatch=64,lr=0.05,lr_min=1e-4,lr_factor=3,lr_patience=5,clipgrad=10000,args=None):
         self.model=model
 
         self.nepochs=nepochs
@@ -16,6 +17,7 @@ class Appr(object):
         self.lr_factor=lr_factor
         self.lr_patience=lr_patience
         self.clipgrad=clipgrad
+        self.device = device
 
         self.criterion=torch.nn.CrossEntropyLoss()
         self.optimizer=self._get_optimizer()
@@ -74,7 +76,7 @@ class Appr(object):
 
         r=np.arange(x.size(0))
         np.random.shuffle(r)
-        r=torch.LongTensor(r).cuda()
+        r=torch.LongTensor(r).to(self.device)
 
         # Loop batches
         for i in range(0,len(r),self.sbatch):
@@ -91,11 +93,12 @@ class Appr(object):
             # Backward
             self.optimizer.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm(self.model.parameters(),self.clipgrad)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(),self.clipgrad)
             self.optimizer.step()
 
         return
 
+    @torch.no_grad()
     def eval(self,t,x,y):
         total_loss=0
         total_acc=0
@@ -103,14 +106,14 @@ class Appr(object):
         self.model.eval()
 
         r=np.arange(x.size(0))
-        r=torch.LongTensor(r).cuda()
+        r=torch.LongTensor(r).to(self.device)
 
         # Loop batches
         for i in range(0,len(r),self.sbatch):
             if i+self.sbatch<=len(r): b=r[i:i+self.sbatch]
             else: b=r[i:]
-            images=torch.autograd.Variable(x[b],volatile=True)
-            targets=torch.autograd.Variable(y[b],volatile=True)
+            images=torch.autograd.Variable(x[b])
+            targets=torch.autograd.Variable(y[b])
 
             # Forward
             outputs=self.model.forward(images)
@@ -120,8 +123,8 @@ class Appr(object):
             hits=(pred==targets).float()
 
             # Log
-            total_loss+=loss.data.cpu().numpy()[0]*len(b)
-            total_acc+=hits.sum().data.cpu().numpy()[0]
+            total_loss+=loss.data.cpu().numpy()*len(b)
+            total_acc+=hits.sum().data.cpu().numpy()
             total_num+=len(b)
 
         return total_loss/total_num,total_acc/total_num

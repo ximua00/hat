@@ -1,4 +1,5 @@
 import sys
+sys.path.append('..')
 import torch
 
 import utils
@@ -8,10 +9,10 @@ class Net(torch.nn.Module):
     def __init__(self,inputsize,taskcla):
         super(Net,self).__init__()
 
-        ncha,size,_=inputsize
+        _,n_channels,size,_=inputsize
         self.taskcla=taskcla
 
-        self.conv1=torch.nn.Conv2d(ncha,64,kernel_size=size//8)
+        self.conv1=torch.nn.Conv2d(n_channels,64,kernel_size=size//8)
         s=utils.compute_conv_output_size(size,size//8)
         s=s//2
         self.conv2=torch.nn.Conv2d(64,128,kernel_size=size//10)
@@ -28,8 +29,8 @@ class Net(torch.nn.Module):
         self.fc1=torch.nn.Linear(256*s*s,2048)
         self.fc2=torch.nn.Linear(2048,2048)
         self.last=torch.nn.ModuleList()
-        for t,n in self.taskcla:
-            self.last.append(torch.nn.Linear(2048,n))
+        for t,output_classes in self.taskcla:
+            self.last.append(torch.nn.Linear(2048,output_classes))
 
         return
 
@@ -44,3 +45,16 @@ class Net(torch.nn.Module):
         for t,i in self.taskcla:
             y.append(self.last[t](h))
         return y
+
+
+
+
+if __name__ == "__main__":
+    size = (1,1,28,28)
+    input = torch.rand(size)
+
+    net = Net(inputsize=size, taskcla=[(0, 5), (1, 5)])
+    print(net)
+    
+    output = net(input)
+    print(output[0].size())

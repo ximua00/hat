@@ -18,6 +18,7 @@ parser.add_argument('--nepochs',default=200,type=int,required=False,help='(defau
 parser.add_argument('--lr',default=0.05,type=float,required=False,help='(default=%(default)f)')
 parser.add_argument('--parameter',type=str,default='',help='(default=%(default)s)')
 args=parser.parse_args()
+utils.make_directory('../res/')
 if args.output=='':
     args.output='../res/'+args.experiment+'_'+args.approach+'_'+str(args.seed)+'.txt'
 print('='*100)
@@ -31,8 +32,10 @@ print('='*100)
 # Seed
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
-if torch.cuda.is_available(): torch.cuda.manual_seed(args.seed)
-else: print('[CUDA unavailable]'); sys.exit()
+# if torch.cuda.is_available(): torch.cuda.manual_seed(args.seed)
+# else: print('[CUDA unavailable]') #; sys.exit()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 # Args -- Experiment
 if args.experiment=='mnist2':
@@ -98,15 +101,16 @@ else:
 
 # Load
 print('Load data...')
+#TODO: What is taskcla?
 data,taskcla,inputsize=dataloader.get(seed=args.seed)
 print('Input size =',inputsize,'\nTask info =',taskcla)
 
 # Inits
 print('Inits...')
-net=network.Net(inputsize,taskcla).cuda()
+net=network.Net(inputsize,taskcla).to(device)
 utils.print_model_report(net)
 
-appr=approach.Appr(net,nepochs=args.nepochs,lr=args.lr,args=args)
+appr=approach.Appr(net,device,nepochs=args.nepochs,lr=args.lr,args=args)
 print(appr.criterion)
 utils.print_optimizer_config(appr.optimizer)
 print('-'*100)
@@ -122,14 +126,16 @@ for t,ncla in taskcla:
     if args.approach == 'joint':
         # Get data. We do not put it to GPU
         if t==0:
+            # initialize
             xtrain=data[t]['train']['x']
             ytrain=data[t]['train']['y']
             xvalid=data[t]['valid']['x']
             yvalid=data[t]['valid']['y']
-            task_t=t*torch.ones(xtrain.size(0)).int()
+            task_t=t*torch.ones(xtrain.size(0)).int() 
             task_v=t*torch.ones(xvalid.size(0)).int()
             task=[task_t,task_v]
         else:
+            # Stack with initiated data. Does not depend on number of tasks
             xtrain=torch.cat((xtrain,data[t]['train']['x']))
             ytrain=torch.cat((ytrain,data[t]['train']['y']))
             xvalid=torch.cat((xvalid,data[t]['valid']['x']))
@@ -139,10 +145,10 @@ for t,ncla in taskcla:
             task=[task_t,task_v]
     else:
         # Get data
-        xtrain=data[t]['train']['x'].cuda()
-        ytrain=data[t]['train']['y'].cuda()
-        xvalid=data[t]['valid']['x'].cuda()
-        yvalid=data[t]['valid']['y'].cuda()
+        xtrain=data[t]['train']['x'].to(device)
+        ytrain=data[t]['train']['y'].to(device)
+        xvalid=data[t]['valid']['x'].to(device)
+        yvalid=data[t]['valid']['y'].to(device)
         task=t
 
     # Train
@@ -151,8 +157,8 @@ for t,ncla in taskcla:
 
     # Test
     for u in range(t+1):
-        xtest=data[u]['test']['x'].cuda()
-        ytest=data[u]['test']['y'].cuda()
+        xtest=data[u]['test']['x'].to(device)
+        ytest=data[u]['test']['y'].to(device)
         test_loss,test_acc=appr.eval(u,xtest,ytest)
         print('>>> Test on task {:2d} - {:15s}: loss={:.3f}, acc={:5.1f}% <<<'.format(u,data[u]['name'],test_loss,100*test_acc))
         acc[t,u]=test_acc

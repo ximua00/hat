@@ -2,6 +2,7 @@ import os,sys
 import numpy as np
 import torch
 from torchvision import datasets,transforms
+from pprint import pprint as pp
 
 ########################################################################################################################
 
@@ -57,3 +58,21 @@ def get(seed=0,fixed_order=False,pc_valid=0):
     return data,taskcla,size
 
 ########################################################################################################################
+
+
+if __name__ == "__main__":
+    data,taskcla,size = get()
+    # pp(data[0]["train"]["y"].size())
+    # pp(data[0]["train"]["x"].size())
+
+    # pp(data[1]["train"]["y"].size())
+    # pp(data[1]["train"]["x"].size())
+    pp(data[0]["ncla"])
+    pp(data[1]["ncla"])
+    # Dictionary of datapoints where:
+    # data[k1][k2][k3]
+    # k1: task id (0, 1)
+    # k2: task id (train, test, valid, nclas)
+    # k3: task id (x,y)
+    print(taskcla)
+    print(size)
