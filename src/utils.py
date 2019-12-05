@@ -86,7 +86,7 @@ def fisher_matrix_diag(t,x,y,model,criterion,sbatch=20):
     # Compute
     model.train()
     for i in tqdm(range(0,x.size(0),sbatch),desc='Fisher diagonal',ncols=100,ascii=True):
-        b=torch.LongTensor(np.arange(i,np.min([i+sbatch,x.size(0)]))).cuda()
+        b=torch.LongTensor(np.arange(i,np.min([i+sbatch,x.size(0)]))).to(device)
         images=torch.autograd.Variable(x[b],volatile=False)
         target=torch.autograd.Variable(y[b],volatile=False)
         # Forward and backward
@@ -148,3 +148,20 @@ def is_number(s):
 
     return False
 ########################################################################################################################
+
+def make_directory(dir_path):
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    return
+
+
+def print_accuracies(acc):
+    print('*'*100)
+    print('Accuracies =')
+    for i in range(acc.shape[0]):
+        print('\t',end='')
+        for j in range(acc.shape[1]):
+            print('{:5.1f}% '.format(100*acc[i,j]),end='')
+        print()
+    print('*'*100)
+    print('Done!')

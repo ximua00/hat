@@ -3,6 +3,7 @@ import numpy as np
 import torch
 
 import utils
+from pprint import pprint as pp
 
 tstart=time.time()
 
@@ -101,7 +102,6 @@ else:
 
 # Load
 print('Load data...')
-#TODO: What is taskcla?
 data,taskcla,inputsize=dataloader.get(seed=args.seed)
 print('Input size =',inputsize,'\nTask info =',taskcla)
 
@@ -126,7 +126,7 @@ for t,ncla in taskcla:
     if args.approach == 'joint':
         # Get data. We do not put it to GPU
         if t==0:
-            # initialize
+            # initialize tensors
             xtrain=data[t]['train']['x']
             ytrain=data[t]['train']['y']
             xvalid=data[t]['valid']['x']
@@ -151,12 +151,12 @@ for t,ncla in taskcla:
         yvalid=data[t]['valid']['y'].to(device)
         task=t
 
-    # Train
+    # Train - redundant for all but the last task in joint mode
     appr.train(task,xtrain,ytrain,xvalid,yvalid)
     print('-'*100)
 
     # Test
-    for u in range(t+1):
+    for u in range(t+1): # because range stops at i-1
         xtest=data[u]['test']['x'].to(device)
         ytest=data[u]['test']['y'].to(device)
         test_loss,test_acc=appr.eval(u,xtest,ytest)
@@ -169,15 +169,7 @@ for t,ncla in taskcla:
     np.savetxt(args.output,acc,'%.4f')
 
 # Done
-print('*'*100)
-print('Accuracies =')
-for i in range(acc.shape[0]):
-    print('\t',end='')
-    for j in range(acc.shape[1]):
-        print('{:5.1f}% '.format(100*acc[i,j]),end='')
-    print()
-print('*'*100)
-print('Done!')
+utils.print_accuracies(acc)
 
 print('[Elapsed time = {:.1f} h]'.format((time.time()-tstart)/(60*60)))
 
