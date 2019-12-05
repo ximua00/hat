@@ -6,9 +6,9 @@ import utils
 
 class Appr(object):
 
-    def __init__(self,model,nepochs=0,sbatch=0,lr=0,lr_min=1e-4,lr_factor=3,lr_patience=5,clipgrad=10000,args=None):
+    def __init__(self,model,device,nepochs=0,sbatch=0,lr=0,lr_min=1e-4,lr_factor=3,lr_patience=5,clipgrad=10000,args=None):
         self.model=model
-
+        self.device=device
         self.criterion=None
         self.optimizer=None
 
@@ -29,7 +29,7 @@ class Appr(object):
             r+=self.labels
         r=np.array(r[:len(y)],dtype=int)
         np.random.shuffle(r)
-        pred=torch.LongTensor(r).cuda()
+        pred=torch.LongTensor(r).to(self.device)
         hits=(pred==y).float()
 
         return 0,hits.mean()

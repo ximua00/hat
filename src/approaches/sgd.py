@@ -76,7 +76,7 @@ class Appr(object):
 
         r=np.arange(x.size(0))
         np.random.shuffle(r)
-        r=torch.LongTensor(r).to(self.device)
+        r=torch.LongTensor(r)
 
         # Loop batches
         for i in range(0,len(r),self.sbatch):

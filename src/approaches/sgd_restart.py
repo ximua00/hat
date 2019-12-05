@@ -6,6 +6,9 @@ from copy import deepcopy
 import utils
 
 class Appr(object):
+    """
+    Restarts the model between tasks. Allows for comparison with/without previous training
+    """
 
     def __init__(self,model,nepochs=100,sbatch=64,lr=0.05,lr_min=1e-4,lr_factor=3,lr_patience=5,clipgrad=10000,args=None):
         self.model=model
@@ -78,7 +81,7 @@ class Appr(object):
 
         r=np.arange(x.size(0))
         np.random.shuffle(r)
-        r=torch.LongTensor(r).cuda()
+        r=torch.LongTensor(r).to(device)
 
         # Loop batches
         for i in range(0,len(r),self.sbatch):
@@ -107,7 +110,7 @@ class Appr(object):
         self.model.eval()
 
         r=np.arange(x.size(0))
-        r=torch.LongTensor(r).cuda()
+        r=torch.LongTensor(r).to(device)
 
         # Loop batches
         for i in range(0,len(r),self.sbatch):

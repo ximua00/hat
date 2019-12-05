@@ -83,7 +83,7 @@ class Appr(object):
         reg_valid = []
         self.logs['mask'][t]={}
         self.logs['mask_pre'][t]={}
-        task=torch.autograd.Variable(torch.LongTensor([t]).cuda(),volatile=False)
+        task=torch.autograd.Variable(torch.LongTensor([t]).to(device),volatile=False)
         bmask=self.model.mask(task,s=self.smax)
         for i in range(len(bmask)):
             bmask[i]=torch.autograd.Variable(bmask[i].data.clone(),requires_grad=False)
@@ -137,7 +137,7 @@ class Appr(object):
                     print()
 
                     # Log activations mask
-                    task=torch.autograd.Variable(torch.LongTensor([t]).cuda(),volatile=False)
+                    task=torch.autograd.Variable(torch.LongTensor([t]).to(device),volatile=False)
                     bmask=self.model.mask(task,s=self.smax)
                     for i in range(len(bmask)):
                         self.logs['mask'][t][i][e] = deepcopy(bmask[i].data.cpu().numpy().astype(np.float32))
@@ -157,7 +157,7 @@ class Appr(object):
         utils.set_model_(self.model,best_model)
 
         # Activations mask
-        task=torch.autograd.Variable(torch.LongTensor([t]).cuda(),volatile=False)
+        task=torch.autograd.Variable(torch.LongTensor([t]).to(device),volatile=False)
         mask=self.model.mask(task,s=self.smax)
         for i in range(len(mask)):
             mask[i]=torch.autograd.Variable(mask[i].data.clone(),requires_grad=False)
@@ -181,7 +181,7 @@ class Appr(object):
 
         r=np.arange(x.size(0))
         np.random.shuffle(r)
-        r=torch.LongTensor(r).cuda()
+        r=torch.LongTensor(r).to(device)
 
         # Loop batches
         for i in range(0,len(r),self.sbatch):
@@ -189,7 +189,7 @@ class Appr(object):
             else: b=r[i:]
             images=torch.autograd.Variable(x[b],volatile=False)
             targets=torch.autograd.Variable(y[b],volatile=False)
-            task=torch.autograd.Variable(torch.LongTensor([t]).cuda(),volatile=False)
+            task=torch.autograd.Variable(torch.LongTensor([t]).to(device),volatile=False)
             s=(self.smax-1/self.smax)*i/len(r)+1/self.smax
 
             # Forward
@@ -239,7 +239,7 @@ class Appr(object):
         total_reg=0
 
         r=np.arange(x.size(0))
-        r=torch.LongTensor(r).cuda()
+        r=torch.LongTensor(r).to(device)
 
         # Loop batches
         for i in range(0,len(r),self.sbatch):
@@ -247,7 +247,7 @@ class Appr(object):
             else: b=r[i:]
             images=torch.autograd.Variable(x[b],volatile=True)
             targets=torch.autograd.Variable(y[b],volatile=True)
-            task=torch.autograd.Variable(torch.LongTensor([t]).cuda(),volatile=True)
+            task=torch.autograd.Variable(torch.LongTensor([t]).to(device),volatile=True)
 
             # Forward
             factor=1
@@ -277,7 +277,7 @@ class Appr(object):
         total_reg=0
 
         r=np.arange(x.size(0))
-        r=torch.LongTensor(r).cuda()
+        r=torch.LongTensor(r).to(device)
 
         # Loop batches
         for i in range(0,len(r),self.sbatch):
@@ -285,7 +285,7 @@ class Appr(object):
             else: b=r[i:]
             images=torch.autograd.Variable(x[b],volatile=True)
             targets=torch.autograd.Variable(y[b],volatile=True)
-            task=torch.autograd.Variable(torch.LongTensor([t]).cuda(),volatile=True)
+            task=torch.autograd.Variable(torch.LongTensor([t]).to(device),volatile=True)
 
             # Forward
             factor=1
